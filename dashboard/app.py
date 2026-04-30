@@ -250,35 +250,47 @@ with left:
         function buildCameraUnit(side) {
           const unit = new THREE.Group();
           const isLeft = side < 0;
-          unit.position.set(isLeft ? -6.9 : 6.9, 0.95, 0);
+          unit.position.set(isLeft ? -7.4 : 7.4, 0.65, 0);
           unit.rotation.y = isLeft ? 0 : Math.PI;
           tankGroup.add(unit);
 
-          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.5, 16), darkMetal);
-          mast.position.set(0.0, -0.1, 0.0);
+          const base = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.16, 1.2), pipeMat);
+          base.position.set(0, -0.72, 0);
+          base.castShadow = true;
+          base.receiveShadow = true;
+          unit.add(base);
+
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.95, 16), darkMetal);
+          mast.position.set(0.0, 0.12, 0.0);
           mast.castShadow = true;
           unit.add(mast);
 
-          const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.95), darkMetal);
-          arm.position.set(isLeft ? 0.26 : -0.26, 0.45, 0.0);
+          const rearBrace = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.9, 0.12), darkMetal);
+          rearBrace.position.set(isLeft ? -0.18 : 0.18, -0.14, 0.0);
+          rearBrace.rotation.z = isLeft ? -0.42 : 0.42;
+          rearBrace.castShadow = true;
+          unit.add(rearBrace);
+
+          const arm = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.16, 0.2), darkMetal);
+          arm.position.set(isLeft ? 0.54 : -0.54, 0.82, 0.0);
           arm.castShadow = true;
           unit.add(arm);
 
-          const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.24, 16), darkMetal);
+          const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.28, 16), darkMetal);
           bracket.rotation.x = Math.PI / 2;
-          bracket.position.set(isLeft ? 0.58 : -0.58, 0.45, 0.0);
+          bracket.position.set(isLeft ? 1.06 : -1.06, 0.82, 0.0);
           bracket.castShadow = true;
           unit.add(bracket);
 
           const body = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.46, 0.52), darkMetal);
-          body.position.set(isLeft ? 0.95 : -0.95, 0.45, 0.0);
+          body.position.set(isLeft ? 1.42 : -1.42, 0.82, 0.0);
           body.castShadow = true;
           body.receiveShadow = true;
           unit.add(body);
 
           const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.32, 24), darkMetal);
           hood.rotation.z = Math.PI / 2;
-          hood.position.set(isLeft ? 1.36 : -1.36, 0.45, 0.0);
+          hood.position.set(isLeft ? 1.82 : -1.82, 0.82, 0.0);
           hood.castShadow = true;
           unit.add(hood);
 
@@ -287,16 +299,43 @@ with left:
             new THREE.MeshStandardMaterial({ color: 0x05070d, metalness: 0.95, roughness: 0.08, transparent: true, opacity: 0.85 })
           );
           lens.rotation.y = isLeft ? Math.PI / 2 : -Math.PI / 2;
-          lens.position.set(isLeft ? 1.53 : -1.53, 0.45, 0.0);
+          lens.position.set(isLeft ? 1.99 : -1.99, 0.82, 0.0);
           unit.add(lens);
 
           const led = new THREE.Mesh(
             new THREE.SphereGeometry(0.06, 16, 16),
             new THREE.MeshStandardMaterial({ color: ledColor(state.visual_score), emissive: ledColor(state.visual_score), emissiveIntensity: state.visual_score >= 90 ? 1.8 : 1.0 })
           );
-          led.position.set(isLeft ? 0.74 : -0.74, 0.62, 0.18);
+          led.position.set(isLeft ? 1.2 : -1.2, 1.0, 0.18);
           unit.add(led);
-          return { unit, led };
+
+          const fovLength = 5.6;
+          const fovRadius = 1.7;
+          const visionCone = new THREE.Mesh(
+            new THREE.ConeGeometry(fovRadius, fovLength, 24, 1, true),
+            new THREE.MeshStandardMaterial({
+              color: 0x4cc9f0,
+              transparent: true,
+              opacity: 0.16,
+              emissive: 0x2a9fd6,
+              emissiveIntensity: 0.25,
+              side: THREE.DoubleSide,
+              depthWrite: false
+            })
+          );
+          visionCone.rotation.z = isLeft ? -Math.PI / 2 : Math.PI / 2;
+          visionCone.position.set(isLeft ? -0.75 : 0.75, 0.82, 0);
+          unit.add(visionCone);
+
+          const fovEdges = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.ConeGeometry(fovRadius, fovLength, 16, 1, true)),
+            new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.35 })
+          );
+          fovEdges.rotation.z = isLeft ? -Math.PI / 2 : Math.PI / 2;
+          fovEdges.position.copy(visionCone.position);
+          unit.add(fovEdges);
+
+          return { unit, led, visionCone };
         }
 
         const camLeft = buildCameraUnit(-1);
@@ -394,6 +433,11 @@ with left:
             const intensity = (Math.sin(blinkPhase.value * 4) + 1) / 2;
             camLeft.led.material.emissiveIntensity = 0.5 + intensity * 2.3;
             camRight.led.material.emissiveIntensity = 0.5 + intensity * 2.3;
+            camLeft.visionCone.material.opacity = 0.12 + intensity * 0.08;
+            camRight.visionCone.material.opacity = 0.12 + intensity * 0.08;
+          } else {
+            camLeft.visionCone.material.opacity = 0.16;
+            camRight.visionCone.material.opacity = 0.16;
           }
 
           if (particleSystem) {
