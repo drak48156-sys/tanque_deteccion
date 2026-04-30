@@ -230,15 +230,15 @@ with left:
         tankGroup.add(sensor);
 
         const conduitMaterial = new THREE.MeshStandardMaterial({ color: 0x597089, metalness: 0.45, roughness: 0.25 });
-        const leakOrigin = new THREE.Vector3(2.9, 0.2, 0);
-        const leftConduit = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 5.2, 16), conduitMaterial);
-        leftConduit.position.set(-1.8, 0.85, 2.4);
-        leftConduit.rotation.z = 1.18;
+        const leakOrigin = new THREE.Vector3(2.15, -0.1, 0.78);
+        const leftConduit = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.5, 16), conduitMaterial);
+        leftConduit.position.set(-1.95, 1.25, 2.25);
+        leftConduit.rotation.set(0.22, 0.14, 1.08);
         leftConduit.castShadow = true;
         tankGroup.add(leftConduit);
         const rightConduit = leftConduit.clone();
-        rightConduit.position.set(-1.8, 0.85, -2.4);
-        rightConduit.rotation.z = -1.18;
+        rightConduit.position.set(-1.95, 1.25, -2.25);
+        rightConduit.rotation.set(-0.22, -0.14, -1.08);
         tankGroup.add(rightConduit);
 
         function ledColor(score) {
@@ -247,48 +247,59 @@ with left:
           return 0x00ff00;
         }
 
-        function buildCameraUnit(zPos) {
+        function buildCameraUnit(side) {
+          const zPos = side * 2.7;
           const unit = new THREE.Group();
-          unit.position.set(-2.7, 1.0, zPos);
+          unit.position.set(-0.9, 1.55, zPos);
           tankGroup.add(unit);
 
-          const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.5, 16), darkMetal);
-          arm.rotation.z = Math.PI / 3;
-          arm.position.set(0.55, 0.45, 0);
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.1, 16), darkMetal);
+          mast.position.set(0.0, -0.28, 0.0);
+          mast.castShadow = true;
+          unit.add(mast);
+
+          const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.12), darkMetal);
+          arm.position.set(0.42, 0.18, -side * 0.18);
           arm.castShadow = true;
           unit.add(arm);
 
-          const body = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.46, 0.46), darkMetal);
-          body.position.set(-0.1, 0.82, 0);
+          const joint = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.16, 16), darkMetal);
+          joint.rotation.x = Math.PI / 2;
+          joint.position.set(0.82, 0.18, -side * 0.18);
+          joint.castShadow = true;
+          unit.add(joint);
+
+          const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.42, 0.5), darkMetal);
+          body.position.set(1.15, 0.18, -side * 0.18);
           body.castShadow = true;
           body.receiveShadow = true;
           unit.add(body);
 
-          const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.22, 24), darkMetal);
+          const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.23, 0.28, 24), darkMetal);
           hood.rotation.z = Math.PI / 2;
-          hood.position.set(-0.48, 0.82, 0);
+          hood.position.set(1.52, 0.18, -side * 0.18);
           hood.castShadow = true;
           unit.add(hood);
 
           const lens = new THREE.Mesh(
-            new THREE.CircleGeometry(0.14, 24),
-            new THREE.MeshStandardMaterial({ color: 0x05070d, metalness: 0.95, roughness: 0.08, transparent: true, opacity: 0.8 })
+            new THREE.CircleGeometry(0.135, 24),
+            new THREE.MeshStandardMaterial({ color: 0x05070d, metalness: 0.95, roughness: 0.08, transparent: true, opacity: 0.85 })
           );
           lens.rotation.y = Math.PI / 2;
-          lens.position.set(-0.6, 0.82, 0);
+          lens.position.set(1.67, 0.18, -side * 0.18);
           unit.add(lens);
 
           const led = new THREE.Mesh(
             new THREE.SphereGeometry(0.06, 16, 16),
             new THREE.MeshStandardMaterial({ color: ledColor(state.visual_score), emissive: ledColor(state.visual_score), emissiveIntensity: state.visual_score >= 90 ? 1.8 : 1.0 })
           );
-          led.position.set(0.18, 0.95, 0.16);
+          led.position.set(1.0, 0.34, -side * 0.02);
           unit.add(led);
           return { unit, led };
         }
 
-        const camLeft = buildCameraUnit(2.4);
-        const camRight = buildCameraUnit(-2.4);
+        const camLeft = buildCameraUnit(1);
+        const camRight = buildCameraUnit(-1);
 
         const leakRate = Math.max(0, state.leak_rate);
         const leakGroup = new THREE.Group();
@@ -296,20 +307,30 @@ with left:
         tankGroup.add(leakGroup);
 
         if (leakRate > 0) {
-          const leakPipe = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.08, 0.08, 0.8, 16),
+          const leakNozzle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.1, 0.1, 0.45, 16),
             new THREE.MeshStandardMaterial({ color: 0x4f6b4f, metalness: 0.35, roughness: 0.45 })
           );
-          leakPipe.rotation.z = Math.PI / 2;
-          leakPipe.position.x = 0.38;
-          leakGroup.add(leakPipe);
+          leakNozzle.rotation.x = Math.PI / 2;
+          leakNozzle.position.set(0.0, 0.0, 0.28);
+          leakNozzle.castShadow = true;
+          leakGroup.add(leakNozzle);
+
+          const leakStream = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.05, 0.09, 1.15 + leakRate * 4.5, 16),
+            new THREE.MeshStandardMaterial({ color: 0x4a9e4a, transparent: true, opacity: 0.72, roughness: 0.15 })
+          );
+          leakStream.position.set(0.22, -0.55, 0.88);
+          leakStream.rotation.z = -0.58;
+          leakStream.castShadow = true;
+          leakGroup.add(leakStream);
 
           const puddle = new THREE.Mesh(
-            new THREE.CircleGeometry(0.45 + leakRate * 9, 32),
-            new THREE.MeshStandardMaterial({ color: 0x4a9e4a, transparent: true, opacity: Math.min(0.85, 0.25 + leakRate * 8) })
+            new THREE.CircleGeometry(0.4 + leakRate * 8, 32),
+            new THREE.MeshStandardMaterial({ color: 0x4a9e4a, transparent: true, opacity: Math.min(0.82, 0.22 + leakRate * 7) })
           );
           puddle.rotation.x = -Math.PI / 2;
-          puddle.position.set(0.95, -3.17, 0);
+          puddle.position.set(0.82, -3.17, 1.0);
           puddle.receiveShadow = true;
           leakGroup.add(puddle);
         }
@@ -321,16 +342,16 @@ with left:
           const positions = new Float32Array(particleCount * 3);
           const geometry = new THREE.BufferGeometry();
           for (let i = 0; i < particleCount; i += 1) {
-            positions[i * 3] = Math.random() * 0.12;
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 0.08;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 0.08;
+            positions[i * 3] = Math.random() * 0.08;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 0.06;
+            positions[i * 3 + 2] = 0.26 + (Math.random() - 0.5) * 0.05;
             particleMeta.push({
-              x: Math.random() * 0.12,
-              y: (Math.random() - 0.5) * 0.08,
-              z: (Math.random() - 0.5) * 0.08,
-              vx: 0.015 + Math.random() * 0.02,
-              vy: -0.02 - Math.random() * 0.03,
-              vz: (Math.random() - 0.5) * 0.01
+              x: Math.random() * 0.08,
+              y: (Math.random() - 0.5) * 0.06,
+              z: 0.26 + (Math.random() - 0.5) * 0.05,
+              vx: 0.02 + Math.random() * 0.03,
+              vy: -0.018 - Math.random() * 0.03,
+              vz: 0.01 + Math.random() * 0.02
             });
           }
           geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -383,12 +404,12 @@ with left:
               p.z += p.vz;
               p.vy -= 0.0018;
               if (p.y < -3.0) {
-                p.x = Math.random() * 0.12;
-                p.y = (Math.random() - 0.5) * 0.08;
-                p.z = (Math.random() - 0.5) * 0.08;
-                p.vx = 0.015 + Math.random() * 0.02;
-                p.vy = -0.02 - Math.random() * 0.03;
-                p.vz = (Math.random() - 0.5) * 0.01;
+                p.x = Math.random() * 0.08;
+                p.y = (Math.random() - 0.5) * 0.06;
+                p.z = 0.26 + (Math.random() - 0.5) * 0.05;
+                p.vx = 0.02 + Math.random() * 0.03;
+                p.vy = -0.018 - Math.random() * 0.03;
+                p.vz = 0.01 + Math.random() * 0.02;
               }
               positions[i * 3] = p.x;
               positions[i * 3 + 1] = p.y;
