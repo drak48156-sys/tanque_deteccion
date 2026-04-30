@@ -248,58 +248,59 @@ with left:
         }
 
         function buildCameraUnit(side) {
-          const zPos = side * 2.7;
           const unit = new THREE.Group();
-          unit.position.set(-0.9, 1.55, zPos);
+          const isLeft = side < 0;
+          unit.position.set(isLeft ? -6.9 : 6.9, 0.95, 0);
+          unit.rotation.y = isLeft ? 0 : Math.PI;
           tankGroup.add(unit);
 
-          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.1, 16), darkMetal);
-          mast.position.set(0.0, -0.28, 0.0);
+          const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.5, 16), darkMetal);
+          mast.position.set(0.0, -0.1, 0.0);
           mast.castShadow = true;
           unit.add(mast);
 
-          const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.12, 0.12), darkMetal);
-          arm.position.set(0.42, 0.18, -side * 0.18);
+          const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.95), darkMetal);
+          arm.position.set(isLeft ? 0.26 : -0.26, 0.45, 0.0);
           arm.castShadow = true;
           unit.add(arm);
 
-          const joint = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.16, 16), darkMetal);
-          joint.rotation.x = Math.PI / 2;
-          joint.position.set(0.82, 0.18, -side * 0.18);
-          joint.castShadow = true;
-          unit.add(joint);
+          const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.24, 16), darkMetal);
+          bracket.rotation.x = Math.PI / 2;
+          bracket.position.set(isLeft ? 0.58 : -0.58, 0.45, 0.0);
+          bracket.castShadow = true;
+          unit.add(bracket);
 
-          const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.42, 0.5), darkMetal);
-          body.position.set(1.15, 0.18, -side * 0.18);
+          const body = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.46, 0.52), darkMetal);
+          body.position.set(isLeft ? 0.95 : -0.95, 0.45, 0.0);
           body.castShadow = true;
           body.receiveShadow = true;
           unit.add(body);
 
-          const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.23, 0.28, 24), darkMetal);
+          const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.32, 24), darkMetal);
           hood.rotation.z = Math.PI / 2;
-          hood.position.set(1.52, 0.18, -side * 0.18);
+          hood.position.set(isLeft ? 1.36 : -1.36, 0.45, 0.0);
           hood.castShadow = true;
           unit.add(hood);
 
           const lens = new THREE.Mesh(
-            new THREE.CircleGeometry(0.135, 24),
+            new THREE.CircleGeometry(0.14, 24),
             new THREE.MeshStandardMaterial({ color: 0x05070d, metalness: 0.95, roughness: 0.08, transparent: true, opacity: 0.85 })
           );
-          lens.rotation.y = Math.PI / 2;
-          lens.position.set(1.67, 0.18, -side * 0.18);
+          lens.rotation.y = isLeft ? Math.PI / 2 : -Math.PI / 2;
+          lens.position.set(isLeft ? 1.53 : -1.53, 0.45, 0.0);
           unit.add(lens);
 
           const led = new THREE.Mesh(
             new THREE.SphereGeometry(0.06, 16, 16),
             new THREE.MeshStandardMaterial({ color: ledColor(state.visual_score), emissive: ledColor(state.visual_score), emissiveIntensity: state.visual_score >= 90 ? 1.8 : 1.0 })
           );
-          led.position.set(1.0, 0.34, -side * 0.02);
+          led.position.set(isLeft ? 0.74 : -0.74, 0.62, 0.18);
           unit.add(led);
           return { unit, led };
         }
 
-        const camLeft = buildCameraUnit(1);
-        const camRight = buildCameraUnit(-1);
+        const camLeft = buildCameraUnit(-1);
+        const camRight = buildCameraUnit(1);
 
         const leakRate = Math.max(0, state.leak_rate);
         const leakGroup = new THREE.Group();
